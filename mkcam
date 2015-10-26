@@ -1,0 +1,577 @@
+#! /bin/sh
+
+echo "CAM file generator version 009"
+echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
+
+# TO DO !
+# - handle assembly variants
+# - eagle -X -s 0.5 -u -N -d PS -o test.ps
+# eagle -X -s $cam_paper_size -u -N -d PS -o test.ps
+
+cad_cam_dir=CAD_CAM
+gerber_format=GERBER_RS274X
+drill_format=EXCELLON
+#make_date=$(date "+%Y-%m-%d_%H-%M-%S") # rm v009
+make_date=$(date "+%Y-%m-%d_%H%M%S") # ins v009
+make_date="_DATE_"$make_date
+
+current_directory=`pwd`
+
+board_name=$1 		#=`basename $current_directory`
+#asm_variant=$2
+layer_ct=$2
+
+# ins v009 begin
+scale_layout=1
+if [ "$#" -eq 3 ]; then
+   # echo "Illegal number of parameters"
+	scale_layout=$3
+fi
+# ins v009 end
+
+
+echo
+echo "board file given : "$board_name
+echo "layer count      : "$layer_ct
+echo "scale layout     : "$scale_layout # ins v009
+echo
+#if [ "$asm_variant" = "" ]; then 
+#	asm_variant="''"
+#	echo "assembly variant : not specified -> assuming default" $asm_variant
+
+#else echo "assembly variant : "$asm_variant
+#fi
+echo
+echo "######################################## W A R N I N G ##################################################"
+echo "#                                                                                                       #"
+echo "#        CAM FILES WILL BE GENERATED BASED ON THE ASSEMBLY VARIANT THE BOARD WAS SAVED WITH LAST !      #"
+echo "#                                                                                                       #"
+echo "######################################## W A R N I N G ##################################################"
+echo
+echo -n "proceed ? (y/n) "
+read key
+echo
+[ ! $key = "y" ] && 
+	{
+	echo "mkcam aborted by operator"
+	exit 1
+	}
+
+# make sure the given board file does exist
+[ ! -e $board_name ] &&
+	{
+	echo "ERROR: Board file '"$board_name"' does not exist !"
+	exit 1
+	}
+	
+# make short board name without extension ".brd"
+board_name_short=${board_name:0:-4}
+
+# make sure there is a schematic belonging to the board file
+schematic_name=$board_name_short.sch
+[ ! -e $schematic_name ] &&
+	{
+	echo "ERROR: Schematic file '"$schematic_name"' does not exist !"
+	exit 1
+	}
+
+# copy schematic_name_short from board_name_short (without extension, both names are equal)
+schematic_name_short=$board_name_short 	
+
+# ins v008 begin
+# make sure the cad/cam directory exists
+[ ! -e $cad_cam_dir ] && 
+	{
+	echo "WARNING : Directory '"$cad_cam_dir"' not found !"
+	echo -n "create and proceed ? (y/n) "
+	read key
+	echo
+	[ ! $key = "y" ] && 
+		{
+		echo "mkcam aborted by operator"
+		exit 1
+		}
+	mkdir $cad_cam_dir
+	}
+# ins v008 end
+
+# make sure the cam directory exists (cam files will be written there later)
+# [ ! -e CAD_CAM/CAM ] && 
+# 	{
+# 	echo "ERROR: Directory 'CAD_CAM/CAM' not found !"
+# 	exit 1
+# 	}
+
+# build name of target directory
+target_directory=$(echo $cad_cam_dir/$board_name_short"_"$make_date)
+
+# in case the target directory gets created at the same minute again, remove the existing one
+[ -e $target_directory ] && 
+	{
+	echo "Target directory '"$target_directory"' already exists, removing old one ..."
+	rm -rf $target_directory
+	}
+
+# make target directory
+mkdir $target_directory
+
+# extend target directory by CAM
+target_directory=$target_directory"/CAM"
+mkdir $target_directory
+
+# make gerber & drill sub directory
+cam_dir=$gerber_format"__"$drill_format
+mkdir $target_directory/$cam_dir
+[ $? -ne 0 ] && exit 1
+
+# make pdf sub directory
+mkdir $target_directory/pdf
+[ $? -ne 0 ] && exit 1
+
+echo "generating CAM files in directory '"$target_directory"' ..."
+#echo "- signal layers :"
+
+content_file=$target_directory/$cam_dir/legend.txt
+echo "CAM files legend           " > $content_file
+echo >> $content_file
+echo "Layer                         File" >> $content_file
+echo "-------------------------------------------------------------------------------" >> $content_file
+
+#ps_parameters=$(echo "-X -s "$scale_layout" -x 0.1 -y 0.2 -u -N -d PS -o") # ins v009
+#ps_parameters=$(echo "-X -s "$scale_layout" -w 12.5 -h 8.5 -u -N -d PS -o") # ins v009 page width 12 inch / page height 8 inch
+ps_parameters=$(echo "-X -s "$scale_layout" -u -N -d PS -o") # ins v009
+#echo "ps_parameters : " $ps_parameters # ins v009
+file_count=0
+
+echo -n "- layer 1 (top) ..."
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cu_layer_top_1.cmp $board_name top via pad > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cu_layer_top_1.cmp" $board_name top via pad tCopper > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Cu Layer 1 (top)             " $board_name_short"_cu_layer_1.cmp" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/01_board_ly01.ps $board_name top via pad tCopper dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/01_board_ly01.ps $board_name top via pad tCopper dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+[ $layer_ct -ge 4 ] && ## ins v005
+	{ # ins v005
+	echo -n "- layer 2 ..."
+	#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cu_layer_2.ly2 $board_name 2 via pad > /dev/null
+	eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cu_layer_2.ly2" $board_name 2 via pad > /dev/null
+	[ $? -ne 0 ] && exit 1
+	file_count=$[file_count+1] # count CAM files
+	# update legend
+	echo "Cu Layer 2                   " $board_name_short"_cu_layer_2.ly2" >> $content_file
+	# make a ps file of this layer
+	#eagle -X -u -N -d PS -o $target_directory/pdf/02_board_ly02.ps $board_name 2 via pad dimension document > /dev/null # rm v009
+	eagle $ps_parameters $target_directory/pdf/02_board_ly02.ps $board_name 2 via pad dimension document > /dev/null # ins v009
+	[ $? -ne 0 ] && exit 1
+	echo
+
+	[ $layer_ct -ge 6 ] &&
+		{
+		echo -n "- layer 3 ..."
+		#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cu_layer_3.ly3 $board_name 3 via pad > /dev/null
+		eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cu_layer_3.ly3" $board_name 3 via pad > /dev/null
+		[ $? -ne 0 ] && exit 1
+		file_count=$[file_count+1] # count CAM files
+		# update legend
+		echo "Cu Layer 3                   " $board_name_short"_cu_layer_3.ly3" >> $content_file
+		# make a ps file of this layer
+		#eagle -X -u -N -d PS -o $target_directory/pdf/03_board_ly03.ps $board_name 3 via pad dimension document > /dev/null # rm v009
+		eagle $ps_parameters $target_directory/pdf/03_board_ly03.ps $board_name 3 via pad dimension document > /dev/null # ins v009
+		[ $? -ne 0 ] && exit 1
+		echo
+		
+		echo -n "- layer 14 ..."
+		#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cu_layer_14.ly14 $board_name 14 via pad > /dev/null
+		eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cu_layer_14.ly14" $board_name 14 via pad > /dev/null
+		[ $? -ne 0 ] && exit 1
+		file_count=$[file_count+1] # count CAM files
+		# update legend
+		echo "Cu Layer 14                  " $board_name_short"_cu_layer_14.ly14" >> $content_file
+		# make a ps file of this layer
+		#eagle -X -u -N -d PS -o $target_directory/pdf/14_board_ly14.ps $board_name 14 via pad dimension document > /dev/null # rm v009
+		eagle $ps_parameters $target_directory/pdf/14_board_ly14.ps $board_name 14 via pad dimension document > /dev/null # ins v009
+		[ $? -ne 0 ] && exit 1
+		echo
+		}
+		
+	echo -n "- layer 15 ..."
+	#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cu_layer_15.ly15 $board_name 15 via pad > /dev/null
+	eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cu_layer_15.ly15" $board_name 15 via pad > /dev/null
+	[ $? -ne 0 ] && exit 1
+	file_count=$[file_count+1] # count CAM files
+	# update legend
+	echo "Cu Layer 15                  " $board_name_short"_cu_layer_15.ly15" >> $content_file
+	# make a ps file of this layer
+	#eagle -X -u -N -d PS -o $target_directory/pdf/15_board_ly15.ps $board_name 15 via pad dimension document > /dev/null # rm v009
+	eagle $ps_parameters $target_directory/pdf/15_board_ly15.ps $board_name 15 via pad dimension document > /dev/null # ins v009
+	[ $? -ne 0 ] && exit 1
+	echo
+	}  # ins v005
+
+echo -n "- layer 16 (bottom) ..."
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cu_layer_bot_16.sol $board_name bot via pad > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cu_layer_bot_16.sol" $board_name bot via pad bCopper > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Cu Layer 16 (bot)            " $board_name_short"_cu_layer_16.sol" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -m -N -d PS -o $target_directory/pdf/16_board_ly16.ps $board_name bot via pad dimension document > /dev/null # rm v005
+#eagle -X -u -N -d PS -o $target_directory/pdf/16_board_ly16.ps $board_name bot via pad bCopper dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/16_board_ly16.ps $board_name bot via pad bCopper dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- silk screen ..."
+#top
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_silk_screen_top.plc $board_name tplace tnames > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_silk_screen_top.plc" $board_name tplace tnames > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Silk Screen Top              " $board_name_short"_silk_screen_top.plc" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/17_board_silk_screen_top_plc.ps $board_name tplace tnames dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/17_board_silk_screen_top_plc.ps $board_name tplace tnames dimension document > /dev/null # rm v009
+[ $? -ne 0 ] && exit 1
+#bot
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_silk_screen_bot.pls $board_name bplace bnames > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_silk_screen_bot.pls" $board_name bplace bnames > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Silk Screen Bottom           " $board_name_short"_silk_screen_bot.pls" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -m -N -d PS -o $target_directory/pdf/18_board_silk_screen_bot_mirrored_pls.ps $board_name bplace bnames dimension document > /dev/null # rm v005
+#eagle -X -u -N -d PS -o $target_directory/pdf/18_board_silk_screen_bot_mirrored_pls.ps $board_name bplace bnames dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/18_board_silk_screen_bot_mirrored_pls.ps $board_name bplace bnames dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- stop mask ..."
+#top
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_solder_stop_top.stc $board_name tstop > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_solder_stop_top.stc" $board_name tstop > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Solder Stop Mask Top         " $board_name_short"_solder_stop_top.stc" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/19_board_solder_stop_top_stc.ps $board_name tstop dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/19_board_solder_stop_top_stc.ps $board_name tstop dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+#bot
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_solder_stop_bot.sts $board_name bstop > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_solder_stop_bot.sts" $board_name bstop > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Solder Stop Mask Bottom      " $board_name_short"_solder_stop_bot.sts" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -m -N -d PS -o $target_directory/pdf/20_board_solder_stop_bot_mirrored_sts.ps $board_name bstop dimension document > /dev/null # rm v005
+#eagle -X -u -N -d PS -o $target_directory/pdf/20_board_solder_stop_bot_mirrored_sts.ps $board_name bstop dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/20_board_solder_stop_bot_mirrored_sts.ps $board_name bstop dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- cream mask ..."
+#top
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cream_top.crc $board_name tcream > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cream_top.crc" $board_name tcream > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Solder Cream Top             " $board_name_short"_cream_top.crc" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/21_board_cream_top_crc.ps $board_name tcream dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/21_board_cream_top_crc.ps $board_name tcream dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+#bot
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_cream_bot.crs $board_name bcream > /dev/null
+eagle -X  -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_cream_bot.crs" $board_name bcream > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Solder Cream Bottom          " $board_name_short"_cream_bot.crs" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -m -N -d PS -o $target_directory/pdf/22_board_cream_bot_mirrored_crs.ps $board_name bcream dimension document > /dev/null # rm v005
+#eagle -X -u -N -d PS -o $target_directory/pdf/22_board_cream_bot_mirrored_crs.ps $board_name bcream dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/22_board_cream_bot_mirrored_crs.ps $board_name bcream dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- drills ..."
+#plated
+#eagle -X -A $asm_variant -d $drill_format -o $target_directory/$cam_dir/$board_name_short_drills_plated.drp $board_name drills > /dev/null
+eagle -X -d $drill_format -o $target_directory/$cam_dir/$board_name_short"_drills_plated.drp" $board_name drills > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+
+# update legend
+echo "Drills Plated                " $board_name_short"_drills_plated.drp" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/23_board_drills_plated_drp.ps $board_name drills dimension document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/23_board_drills_plated_drp.ps $board_name drills dimension document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+
+#non-plated
+#eagle -X -A $asm_variant -d $drill_format -o $target_directory/$cam_dir/$board_name_short_drills_non_plated.drn $board_name holes > /dev/null
+eagle -X -d $drill_format -o $target_directory/$cam_dir/$board_name_short"_drills_non_plated.drn" $board_name holes > /dev/null
+[ $? -ne 0 ] && exit 1
+# non-plated drills are not always there. so if file created:
+[ -e $target_directory/$cam_dir/$board_name_short"_drills_non_plated.drn" ] && 
+	{
+	file_count=$[file_count+1] # count CAM files
+	# update legend
+	echo "Drills Non-Plated            " $board_name_short"_drills_non_plated.drn" >> $content_file
+	# make a ps file of this layer
+	#eagle -X -u -N -d PS -o $target_directory/pdf/24_board_drills_non_plated_drn.ps $board_name holes dimension document > /dev/null # rm v009
+	eagle $ps_parameters $target_directory/pdf/24_board_drills_non_plated_drn.ps $board_name holes dimension document > /dev/null # ins v009
+	[ $? -ne 0 ] && exit 1
+	}
+echo
+# processing drill legend not required anymore. pcb house checks drills with other tools
+#echo "- Drills Documentation ..."
+# make a separate ps file for drill legend # NOTE ! THIS IS NOT A GERBER FILE, IT SERVES FOR DOCUMENTATION ONLY !!
+#eagle -X -u -N -d PS -o $target_directory/pdf/25_board_drill_legend.ps $board_name 144 145 dimension document > /dev/null # created by ulp drill-legend-stack # ins v006
+#[ $? -ne 0 ] && 
+#	{
+#	echo -n "proceed ? (y/n) "
+#	read key
+#	echo
+#	[ ! $key = "y" ] && 
+#		{
+#		echo "mkcam aborted by operator"
+#		exit 1
+#		}
+#	}
+#echo
+
+echo -n "- plated millings ..."
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_millings_plated.mil $board_name milling > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_millings_plated.mil" $board_name milling > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Millings Plated              " $board_name_short"_millings_plated.mil" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/26_board_millings_plated_mil.ps $board_name milling dimension document > /dev/null
+# having the dimension layer enabled may cause confusing of board dimension with plated millings
+#eagle -X -u -N -d PS -o $target_directory/pdf/27_board_millings_plated_mil.ps $board_name milling document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/27_board_millings_plated_mil.ps $board_name milling document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- outline ..."
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_outline.oln $board_name dimension > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_outline.oln" $board_name dimension > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Outline/Millings Non-Plated  " $board_name_short"_outline.oln" >> $content_file
+# make a ps file of this layer # no need, outline alread defined in other ps files
+#eagle -X -u -N -d PS -o $target_directory/pdf/28_board_outline_oln.ps $board_name dimension document > /dev/null
+#[ $? -ne 0 ] && exit 1
+echo
+
+echo "- documentation"
+
+echo -n "- dimensions, measures, document ..."
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_documentation.dcm $board_name dimension measures document > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_documentation.dcm" $board_name dimension measures document > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Documentation                " $board_name_short"_documentation.dcm" >> $content_file
+# make a ps file of this layer
+# processing layer 144 for drill legend not required any more
+#eagle -X -u -N -d PS -o $target_directory/pdf/29_board_documentation_dcm.ps $board_name 144 dimension measures document > /dev/null
+#eagle -X -u -N -d PS -o $target_directory/pdf/29_board_documentation_dcm.ps $board_name dimension measures document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/29_board_documentation_dcm.ps $board_name dimension measures document > /dev/null # ins v009
+#[ $? -ne 0 ] && 
+#	{
+#	echo -n "proceed ? (y/n) "
+#	read key
+#	echo
+#	[ ! $key = "y" ] && 
+#		{
+#		echo "mkcam aborted by operator"
+#		exit 1
+#		}
+#	}
+echo
+
+echo -n "- dimension, tplace, tvalues, tdoc, document"
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_values_top.tav $board_name dimension tplace tvalues tdoc document > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_values_top.tav" $board_name dimension tplace tvalues tdoc document > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Values Top                   " $board_name_short"_values_top.tav" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/30_board_values_top_tav.ps $board_name dimension tplace tvalues tdoc document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/30_board_values_top_tav.ps $board_name dimension tplace tvalues tdoc document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- dimension, bplace, bvalues, bdoc, document"
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_values_bot.bav $board_name dimension bplace bvalues bdoc document > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_values_bot.bav" $board_name dimension bplace bvalues bdoc document > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Values Bottom                " $board_name_short"_values_bot.bav" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -m -N -d PS -o $target_directory/pdf/31_board_values_bot_mirrored_bav.ps $board_name dimension bplace bvalues bdoc document > /dev/null # rm v005
+#eagle -X -u -N -d PS -o $target_directory/pdf/31_board_values_bot_mirrored_bav.ps $board_name dimension bplace bvalues bdoc document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/31_board_values_bot_mirrored_bav.ps $board_name dimension bplace bvalues bdoc document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- dimension, tplace, torigins, tnames, tdoc, document ..."
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_documentation_top.tdc $board_name dimension tplace torigin tnames tdoc document > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_documentation_top.tdc" $board_name dimension tplace tnames tdoc document > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Documentation Top            " $board_name_short"_documentation_top.tdc" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -N -d PS -o $target_directory/pdf/32_board_values_documentation_top_tdc.ps $board_name dimension tplace tnames tdoc document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/32_board_values_documentation_top_tdc.ps $board_name dimension tplace tnames tdoc document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo -n "- dimension, bplace, borigin, bnames, bdoc, document ..."
+#eagle -X -A $asm_variant -d $gerber_format -o $target_directory/$cam_dir/$board_name_short_documentation_bot.bdc $board_name dimension bplace borigin bnames bdoc document > /dev/null
+eagle -X -d $gerber_format -o $target_directory/$cam_dir/$board_name_short"_documentation_bot.bdc" $board_name dimension bplace bnames bdoc document > /dev/null
+[ $? -ne 0 ] && exit 1
+file_count=$[file_count+1] # count CAM files
+# update legend
+echo "Documentation Bottom         " $board_name_short"_documentation_bot.bdc" >> $content_file
+# make a ps file of this layer
+#eagle -X -u -m -N -d PS -o $target_directory/pdf/33_board_values_documentation_bot_mirrored_bdc.ps $board_name dimension bplace bnames bdoc document > /dev/null # rm v005
+#eagle -X -u -N -d PS -o $target_directory/pdf/33_board_values_documentation_bot_mirrored_bdc.ps $board_name dimension bplace bnames bdoc document > /dev/null # rm v009
+eagle $ps_parameters $target_directory/pdf/33_board_values_documentation_bot_mirrored_bdc.ps $board_name dimension bplace bnames bdoc document > /dev/null # ins v009
+[ $? -ne 0 ] && exit 1
+echo
+
+echo >> $content_file
+echo "-------------------------------------------------------------------------------" >> $content_file
+echo "File Count Total: "$file_count >> $content_file
+
+#merge all *.ps files into one singe pdf file -> temp.pdf
+ps_files=`ls $target_directory/pdf/*.ps`
+gs -q -dBATCH -dAutoFilterColorImages=false -sColorImageFilter=FlateEncode -dNOPAUSE -sPAPERSIZE=a4 -sDEVICE=pdfwrite -sOutputFile=$target_directory/pdf/temp.pdf ${ps_files}
+[ $? -ne 0 ] && exit 1
+
+#create an info file for pdftk (a pdf editing tool) to change the title bar
+echo "InfoKey: Title" > $target_directory/pdf/pdftk.opt
+echo "InfoValue:" $board_name >> $target_directory/pdf/pdftk.opt
+pdftk $target_directory/pdf/temp.pdf update_info $target_directory/pdf/pdftk.opt output $target_directory/pdf/$board_name.pdf
+[ $? -ne 0 ] && exit 1
+
+# clean up
+rm $target_directory/pdf/temp.pdf
+rm $target_directory/pdf/*.ps
+rm $target_directory/pdf/pdftk.opt
+rm $target_directory/$cam_dir/*.gpi	# remove gpi files, not used by manufacturer
+rm $target_directory/$cam_dir/*.dri	# remove dri files, not used by manufacturer
+#[ -e $target_directory/$cam_dir/"Transcode Report.txt" ] && echo transcode
+
+echo "- net & part list ..." # ins v008
+mkdir $target_directory/NET_PART_LIST # ins v008
+#cp net_part_list/netlist.txt $target_directory/NETLIST/$board_name_short"_netlist".txt # ins v008
+eagle "-C export netlist $target_directory/NET_PART_LIST/$board_name_short"_netlist".txt; quit;" $board_name_short.brd
+[ $? -ne 0 ] && exit 1 # ins v008
+eagle "-C export partlist $target_directory/NET_PART_LIST/$board_name_short"_partlist".txt; quit;" $board_name_short.brd
+[ $? -ne 0 ] && exit 1 # ins v008
+
+echo "- BOM ..."
+mkdir $target_directory/BOM
+#cp net_part_list/partlist.txt $target_directory/BOM/$board_name_short"_part_coordinates".txt
+#[ $? -ne 0 ] && exit 1
+cp bom/$board_name_short"_bom.csv" $target_directory/BOM/
+[ $? -ne 0 ] && exit 1
+
+echo "- zipping ..."
+# zip board gerber and drill data	
+target_directory=$(echo "CAD_CAM/"$board_name_short"_"$make_date)
+target_zip_file=$target_directory/$board_name_short"_CAM_"$make_date.zip
+zip -r $target_zip_file $target_directory/CAM
+
+#--------------------------------------------------------------------------
+
+echo "- design files ..."
+
+# build name of target directory
+target_directory=$(echo "CAD_CAM/"$board_name_short"_"$make_date)
+
+# extend target directory by CAD
+target_directory=$target_directory"/CAD"
+mkdir $target_directory
+[ $? -ne 0 ] && exit 1
+
+# make sub directory for design files
+mkdir $target_directory/design_eagle
+[ $? -ne 0 ] && exit 1
+
+# make sub directory for pdf files
+mkdir $target_directory/pdf
+[ $? -ne 0 ] && exit 1
+target_pdf=$target_directory/pdf/$board_name_short"_schematic.pdf"
+
+echo "- brd & schematic ..."
+cp $board_name $target_directory/design_eagle/
+cp $schematic_name $target_directory/design_eagle/
+#eagle "-C PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.sch # rm v009
+eagle "-C PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.sch # ins v009
+[ $? -ne 0 ] && exit 1
+
+echo "- net & part list ..."
+#cp net_part_list/netlist.txt $target_directory/design_eagle/$board_name_short"_netlist".txt
+#cp net_part_list/partlist.txt $target_directory/design_eagle/$board_name_short"_partlist".txt
+eagle "-C export netlist $target_directory/design_eagle/$board_name_short"_netlist".txt; quit;" $board_name_short.brd
+eagle "-C export partlist $target_directory/design_eagle/$board_name_short"_partlist".txt; quit;" $board_name_short.brd
+
+echo "- zipping .."
+target_directory=$(echo "CAD_CAM/"$board_name_short"_"$make_date)
+target_zip_file=$target_directory/$board_name_short"_CAD_"$make_date.zip
+zip -r $target_zip_file $target_directory/CAD
+
+#echo "- schematic pages ..."
+
+# export every sheet into a separate ps file as long as sheets are found
+#sheet_counter=0  
+#while [ $sheet_counter -ge 0 ]
+# do
+#  sheet_counter=$[sheet_counter+1]
+  #echo -n " "$sheet_counter
+  #echo -n -e "\r$sheet_counter"
+#  eagle -X -N -d PS -o $target_directory/sheet_$sheet_counter.ps $schematic_name_short.s$sheet_counter nets busses symbols names values info guide frame_development > /dev/null
+#  [ $? -ne 0 ] && break # if no more sheets are to be processed, exit here
+# done
+
+
+#merge all sheet_*.ps files into one singe pdf file
+#ps_files=`ls $target_directory/sheet_*.ps`
+#gs -q -dBATCH -dAutoFilterColorImages=false -sColorImageFilter=FlateEncode -dNOPAUSE -sPAPERSIZE=a4 -sDEVICE=pdfwrite -sOutputFile=$target_directory/$schematic_name_short.pdf ${ps_files}
+
+#clean up, by deleting all now useless ps files
+#rm $target_directory/sheet_*.ps
+
+#sheet_counter=$[sheet_counter-1] 
+#echo "sheets exported: "$sheet_counter 
+
+echo "... done"
+
+ 
+
+
+
+
