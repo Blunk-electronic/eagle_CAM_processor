@@ -1,6 +1,8 @@
-#! /bin/sh
+#! /bin/bash
 
-echo "CAM file generator version 009"
+#changed /bin/sh to /bin/bash so that it works on unbuntu and opensuse as well
+
+echo "CAM file generator version 010"
 echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
 
 # TO DO !
