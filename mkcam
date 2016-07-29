@@ -537,7 +537,8 @@ cp $schematic_name $target_directory/design_eagle/
 #eagle "-C PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.sch # ins v009
 #NOTE 1: does not work with V7.5 any more due to a bug
 #NOTE 2: in v7.5 eagle confuses brd and sch extension. tempoarily the file extension to print a schematic must be "brd"
-eagle "-C PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.brd # ins v011
+#NOTE 3: in v7.5 for some reason we also have to mirror the schematic with option -m
+eagle "-C PRINT -m -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.brd # ins v011
 [ $? -ne 0 ] && exit 1
 
 echo "- net & part list ..."
