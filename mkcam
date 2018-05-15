@@ -2,11 +2,10 @@
 
 #changed /bin/sh to /bin/bash so that it works on unbuntu and opensuse as well
 
-echo "CAM file generator version 011"
+echo "CAM file generator version 012"
 echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
 
 # TO DO !
-# READ LINE 537 ff !
 # - handle assembly variants
 # - eagle -X -s 0.5 -u -N -d PS -o test.ps
 # eagle -X -s $cam_paper_size -u -N -d PS -o test.ps
@@ -14,6 +13,7 @@ echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.d
 cad_cam_dir=CAD_CAM
 gerber_format=GERBER_RS274X
 drill_format=EXCELLON
+
 #make_date=$(date "+%Y-%m-%d_%H-%M-%S") # rm v009
 make_date=$(date "+%Y-%m-%d_%H%M%S") # ins v009
 make_date="_DATE_"$make_date
@@ -492,14 +492,18 @@ mkdir $target_directory/NET_PART_LIST # ins v008
 #cp net_part_list/netlist.txt $target_directory/NETLIST/$board_name_short"_netlist".txt # ins v008
 eagle "-C export netlist $target_directory/NET_PART_LIST/$board_name_short"_netlist".txt; quit;" $board_name_short.brd
 [ $? -ne 0 ] && exit 1 # ins v008
-eagle "-C export partlist $target_directory/NET_PART_LIST/$board_name_short"_partlist".txt; quit;" $board_name_short.brd
+# for some reason, the partlist (for pick and place) must be exported from the schematic (seems to be a bug in version 9.0.1)
+eagle "-C export partlist $target_directory/NET_PART_LIST/$board_name_short"_partlist".txt; quit;" $board_name_short.sch
 [ $? -ne 0 ] && exit 1 # ins v008
 
 echo "- BOM ..."
 mkdir $target_directory/BOM
 #cp net_part_list/partlist.txt $target_directory/BOM/$board_name_short"_part_coordinates".txt
 #[ $? -ne 0 ] && exit 1
-cp bom/$board_name_short"_bom.csv" $target_directory/BOM/
+# here we launch an ulp that generates the BOM. NOTE: this ulp is a modified version of the default shipped bom.ulp
+# it does no ask for any options but exports right a way into a csv file.
+eagle "-C run bom.ulp; quit;" $board_name_short.brd $board_name_short.sch
+mv $board_name_short.csv $target_directory/BOM/$board_name_short.csv
 [ $? -ne 0 ] && exit 1
 
 echo "- zipping ..."
@@ -545,7 +549,8 @@ echo "- net & part list ..."
 #cp net_part_list/netlist.txt $target_directory/design_eagle/$board_name_short"_netlist".txt
 #cp net_part_list/partlist.txt $target_directory/design_eagle/$board_name_short"_partlist".txt
 eagle "-C export netlist $target_directory/design_eagle/$board_name_short"_netlist".txt; quit;" $board_name_short.brd
-eagle "-C export partlist $target_directory/design_eagle/$board_name_short"_partlist".txt; quit;" $board_name_short.brd
+# for some reason, the partlist (for pick and place) must be exported from the schematic (seems to be a bug in version 9.0.1)
+eagle "-C export partlist $target_directory/design_eagle/$board_name_short"_partlist".txt; quit;" $board_name_short.sch
 
 echo "- zipping .."
 target_directory=$(echo "CAD_CAM/"$board_name_short"_"$make_date)
@@ -578,8 +583,4 @@ zip -r $target_zip_file $target_directory/CAD
 
 echo "... done"
 
- 
-
-
-
-
+exit;
