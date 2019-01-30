@@ -19,7 +19,7 @@ The fab gets plot and drill data, BOM, ... the CAM files.
 - identify parts to be mounted or not to be mounted (attribute "BOM")
 - mind accessories (cables, wires, screws, clamps, washers, ...)
 - check orientation of connectors (pin 1, cable insertion, ...)
-- export BOM (in csv format)
+- export BOM (in csv format), send it to Stock Manager and copy the result in directory "bom"
 
 - check polygons (width, isolation, rank, bottlenecks, orphans, ...)
 - check plated millings in inner layers
