@@ -7,6 +7,44 @@ for the manufacturing and assembly folks.
 Remember: Never give design files away to the fab ! 
 The fab gets plot and drill data, BOM, ... the CAM files.
 
+## General Operations before releasing a PCB design
+
+- global attributes in sch/brd
+- update schematic and layout from all libraries (optional)
+- check net class settings
+- renumber sheets
+- check assembly variants (if any)
+- run statistics-schematic ulp to check for proper net names, prefixes, ...
+- run ERC
+- identify parts to be mounted or not to be mounted (attribute "BOM")
+- mind accessories (cables, wires, screws, clamps, washers, ...)
+- check orientation of connectors (pin 1, cable insertion, ...)
+- export BOM (in csv format)
+
+- check polygons (width, isolation, rank, bottlenecks, orphans, ...)
+- check plated millings in inner layers
+- ratsnet supply signals or ratsnet whole board
+- check via drills, mounting holes, stop mask, fiducials vs. stop mask areas
+- check stop mask fine of pitch components
+- run DRC on signals
+- run DRC on keepout
+- inspect layer brd_placement notes (optional)
+- check silk screen (text size, font, ratio)
+- avoid silk screen on vias
+- value placement in brd (text size, font, ratio)
+- export netlist/partlist (pick & place) (optional, mkcam cares for that)
+- check layer markers in ALL layers (TOP, BOT, L2, L15, ...)
+- check fiducials (even positions)
+- check t/bCopper layer objects (layers 53/54)
+- draw measures
+- delete uselsess layers
+- update drill symbols (optional)
+- display all layers -> run DRC (mind assembly variants, if any)
+- make cam data with mkcam (see below)
+- review CAM files
+- ask for quoation at pcb-house (findings ?)
+- release
+
 ## Installation
 
 The "installer" just copies the script "mkcam" to $HOME/bin. This way the user is
