@@ -7,7 +7,7 @@ for the manufacturing and assembly folks.
 Remember: Never give design files away to the fab ! 
 The fab gets plot and drill data, BOM, ... the CAM files.
 
-## General Operations before releasing a PCB design
+## general steps before releasing a PCB design
 
 - global attributes in sch/brd
 - update schematic and layout from all libraries (optional)
