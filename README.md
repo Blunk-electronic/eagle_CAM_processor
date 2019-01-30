@@ -8,6 +8,10 @@ Remember: Never give design files away to the fab !
 The fab gets plot and drill data, BOM, ... the CAM files.
 
 ## general steps before releasing a PCB design
+These are general steps. They are independent of the CAE system.
+The order in which they are executed may differ. However, all steps should be taken. 
+Some steps might be required to be repeated once a design error or other mistake
+has been detected.
 
 - global attributes in sch/brd
 - update schematic and layout from all libraries (optional)
@@ -49,7 +53,7 @@ The fab gets plot and drill data, BOM, ... the CAM files.
 
 The "installer" just copies the script "mkcam" to $HOME/bin. This way the user is
 free to modifiy "mkcam" as she whishes. The bin directory must be created
-manually if not exising already. Make sure the $PATH environment variable is set properly.
+manually if not existing already. Make sure the $PATH environment variable is set properly.
 
 ```sh
 sh install.sh
