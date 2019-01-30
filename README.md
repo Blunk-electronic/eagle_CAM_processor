@@ -8,7 +8,7 @@ Remember: Never give design files away to the fab !
 The fab gets plot and drill data, BOM, ... the CAM files.
 
 ## general steps before releasing a PCB design
-These are general steps. They are independent of the CAE system.
+These are general steps. They are mostly independent of the CAE system.
 The order in which they are executed may differ. However, all steps should be taken. 
 Some steps might be required to be repeated once a design error or other mistake
 has been detected.
@@ -23,7 +23,7 @@ has been detected.
 - identify parts to be mounted or not to be mounted (attribute "BOM")
 - mind accessories (cables, wires, screws, clamps, washers, ...)
 - check orientation of connectors (pin 1, cable insertion, ...)
-- export BOM (in csv format), send it to Stock Manager and copy the result in directory "bom"
+- export BOM (in csv format), send it to Stock Manager and copy the result in directory "bom" (see below)
 
 - check polygons (width, isolation, rank, bottlenecks, orphans, ...)
 - check plated millings in inner layers
