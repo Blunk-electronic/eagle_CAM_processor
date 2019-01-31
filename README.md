@@ -23,17 +23,18 @@ has been detected.
 - identify parts to be mounted or not to be mounted (attribute "BOM")
 - mind accessories (cables, wires, screws, clamps, washers, ...)
 - check orientation of connectors (pin 1, cable insertion, ...)
-- export BOM (in csv format), send it to Stock Manager and copy the result in directory "bom" (see below)
 
+- check board contours, size and position of mounting holes 
 - check polygons (width, isolation, rank, bottlenecks, orphans, ...)
-- check plated millings in inner layers
-- ratsnet supply signals or ratsnet whole board
-- check via drills, mounting holes, stop mask, fiducials vs. stop mask areas
-- check stop mask fine of pitch components
-- run DRC on signals
+- check plated millings in inner layers (if any)
+- ratsnet supply signals or ratsnet whole board (output should read "nothingn to do")
+- check stop mask of areas exposed due to fiducials or other objects (tracks might be exposed)
+- check stop mask between pads of fine pitch components 
+- run DRC on signal layers exclusively
 - run DRC on keepout
 - inspect layer brd_placement notes (optional)
 - check silk screen (text size, font, ratio)
+- Make sure interactive parts (switches, connectors, LEDs, ...) have a text in silk screen that tells the purpose.
 - avoid silk screen on vias
 - value placement in brd (text size, font, ratio)
 - export netlist/partlist (pick & place) (optional, mkcam cares for that)
@@ -43,7 +44,8 @@ has been detected.
 - draw measures
 - delete uselsess layers
 - update drill symbols (optional)
-- display all layers -> run DRC (mind assembly variants, if any)
+- display all layers except tVal and bValue -> run DRC (mind assembly variants, if any)
+- export BOM from inside the schematic editor (in csv format, separator semicolon), send it to Stock Manager and copy the result in directory "bom" (see below)
 - make cam data with mkcam (see below)
 - review CAM files
 - ask for quoation at pcb-house (findings ?)
