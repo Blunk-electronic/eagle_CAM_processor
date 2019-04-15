@@ -1,7 +1,7 @@
 #! /bin/bash
 set -e
 
-echo "CAM file generator version 016"
+echo "CAM file generator version 017"
 echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
 
 # IMPORTANT: Some EAGLE verions confuses brd and sch extension.
@@ -43,13 +43,13 @@ echo
 
 #else echo "assembly variant : "$asm_variant
 #fi
-echo
-echo "######################################## W A R N I N G ##################################################"
-echo "#                                                                                                       #"
-echo "#        CAM FILES WILL BE GENERATED BASED ON THE ASSEMBLY VARIANT THE BOARD WAS SAVED WITH LAST !      #"
-echo "#                                                                                                       #"
-echo "######################################## W A R N I N G ##################################################"
-echo
+#echo
+#echo "######################################## W A R N I N G ##################################################"
+#echo "#                                                                                                       #"
+echo "WARNING: CAM FILES WILL BE GENERATED BASED ON THE ASSEMBLY VARIANT THE BOARD WAS SAVED WITH LAST !"
+#echo "#                                                                                                       #"
+#echo "######################################## W A R N I N G ##################################################"
+#echo
 echo -n "proceed ? (y/n) "
 read key
 echo
