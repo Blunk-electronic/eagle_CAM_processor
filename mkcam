@@ -1,7 +1,7 @@
 #! /bin/bash
 set -e
 
-echo "CAM file generator version 018"
+echo "CAM file generator version 019"
 echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
 
 # IMPORTANT: Some EAGLE verions confuses brd and sch extension.
@@ -486,6 +486,9 @@ bom_by_stock_manager=bom/$board_name_short"_bom.csv"
 	}
 
 
+echo "- IDF ..."
+eagle "-C edit .s1; board; run $HOME/git/BEL/lbr_eagle/ulp/export-idf.ulp; quit;" $board_name_short.brd
+	
 echo "- zipping ..."
 # zip board gerber and drill data	
 target_directory=$(echo "CAD_CAM/"$board_name_short"_"$make_date)
