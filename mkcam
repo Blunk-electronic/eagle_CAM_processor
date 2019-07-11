@@ -463,7 +463,6 @@ eagle "-C edit .s1; board; export partlist $target_directory/NET_PART_LIST/$boar
 
 echo "- BOM ..."
 mkdir $target_directory/BOM
-
 # Export the BOM that contains the device attributes. 
 # NOTE: Replace the bom.ulp on your machine by the one provided at 
 # https://github.com/Blunk-electronic/lbr_eagle/blob/master/ulp/bom.ulp
@@ -487,7 +486,11 @@ bom_by_stock_manager=bom/$board_name_short"_bom.csv"
 
 
 echo "- IDF ..."
-eagle "-C edit .s1; board; run $HOME/git/BEL/lbr_eagle/ulp/export-idf.ulp; quit;" $board_name_short.brd
+mkdir $target_directory/IDF
+# Export the IDF. NOTE: The ulp export-idf.ulp must exist on your machine.
+# Download it from https://github.com/Blunk-electronic/lbr_eagle/blob/master/ulp/export-idf.ulp
+eagle "-C edit .s1; board; run export-idf.ulp; quit;" $board_name_short.brd
+mv $board_name_short.em? $target_directory/IDF/
 	
 echo "- zipping ..."
 # zip board gerber and drill data	
