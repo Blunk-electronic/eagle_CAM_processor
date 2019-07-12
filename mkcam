@@ -298,7 +298,8 @@ echo
 
 echo -n "- drills ..."
 #plated
-eagle -X -d $drill_format -o $target_directory/$cam_dir/$board_name_short"_drills_plated.drp" $board_name drills > /dev/null
+#eagle -X -d $drill_format -o $target_directory/$cam_dir/$board_name_short"_drills_plated.drp" $board_name drills > /dev/null
+eagle -X -d $drill_format -o $target_directory/$cam_dir/$board_name_short"_drills_plated.%L.drp" $board_name drills > /dev/null
 if [ -e $target_directory/$cam_dir/$board_name_short"_drills_plated.drp" ] 
 	then
 		file_count=$[file_count+1] # count CAM files
@@ -309,9 +310,12 @@ if [ -e $target_directory/$cam_dir/$board_name_short"_drills_plated.drp" ]
 		eagle $ps_parameters $target_directory/pdf/23_board_drills_plated_drp.ps $board_name drills dimension document > /dev/null
 	
 	else
-		plated_drill_file_count=$(ls $target_directory/$cam_dir/$board_name_short"_drills_plated.drp".???? | wc -l)
+		# count drill files:
+		#plated_drill_file_count=$(ls $target_directory/$cam_dir/$board_name_short"_drills_plated.drp".???? | wc -l)
+		plated_drill_file_count=$(ls $target_directory/$cam_dir/$board_name_short"_drills_plated".????.drp | wc -l)
 		echo >> $content_file
-		echo "WARNING: $plated_drill_file_count drill files *.drp.xxxx for each via type created !" >> $content_file
+		#echo "WARNING: $plated_drill_file_count drill files *.drp.xxxx for each via type created !" >> $content_file
+		echo "WARNING: $plated_drill_file_count drill files $board_name_short"_drills_plated.xxxx.drp" for each via type created !" >> $content_file
 		file_count=$[file_count + plated_drill_file_count] # count CAM files
 		echo >> $content_file
 		
