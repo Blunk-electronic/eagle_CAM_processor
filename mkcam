@@ -1,17 +1,55 @@
 #! /bin/bash
-set -e
 
-echo "CAM file generator version 019"
-echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
+# ------------------------------------------------------------------------------
+# --         Copyright (C) 2019 Mario Blunk, Blunk electronic                 --
+# --                                                                          --
+# --    This program is free software: you can redistribute it and/or modify  --
+# --    it under the terms of the GNU General Public License as published by  --
+# --    the Free Software Foundation, either version 3 of the License, or     --
+# --    (at your option) any later version.                                   --
+# --                                                                          --
+# --    This program is distributed in the hope that it will be useful,       --
+# --    but WITHOUT ANY WARRANTY; without even the implied warranty of        --
+# --    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         --
+# --    GNU General Public License for more details.                          --
+# --                                                                          --
+# --    You should have received a copy of the GNU General Public License     --
+# --    along with this program.  If not, see <http://www.gnu.org/licenses/>. --
+# ------------------------------------------------------------------------------
 
-# IMPORTANT: Some EAGLE verions confuse brd and sch extension.
-# There are comments in this script where you must adapt to your EAGLE version.
+# For correct displaying set tab width in your editor to 4.
+
+# The two letters "CS" indicate a "construction side" where things are not
+# finished yet or intended for the future.
+
+# Please send your questions and comments to:
+# info@blunk-electronic.de
+# or visit <http://www.blunk-electronic.de> for more.
+
+
+# IMPORTANT: 
+# 1. This script runs on UNIX/Linux only.
+# 2. This script requires some ULPs on your machine. See NOTES below.
+# 3. Make sure your EAGLE searches ULPs in the right directories 
+#    (control panel/options/directories/User Language Programs)
 
 # TO DO !
 # - handle assembly variants
+# - scale layout so that it fits on a A4 sheet
+# hints: 
 # - eagle -X -s 0.5 -u -N -d PS -o test.ps
-# eagle -X -s $cam_paper_size -u -N -d PS -o test.ps
-# eagle -X -A $asm_variant
+# - eagle -X -s $cam_paper_size -u -N -d PS -o test.ps
+# - eagle -X -A $asm_variant
+
+# history of changes:
+# 
+# 
+# 
+
+set -e
+
+echo "CAM file generator version 020"
+echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
 
 cad_cam_dir=CAD_CAM
 gerber_format=GERBER_RS274X
@@ -438,6 +476,13 @@ mkdir $target_directory/IPC-D-356
 eagle "-C edit .s1; board; run export-ipc-d-356.ulp; quit;" $board_name_short.brd
 mv $board_name_short.ipc $target_directory/IPC-D-356
 	
+echo "- FABMASTER ..."
+mkdir $target_directory/fabmaster
+# Export fabmaster data. NOTE: The ulp export-fabmaster.ulp must exist on your machine.
+# Download it from https://github.com/Blunk-electronic/lbr_eagle/blob/master/ulp/export-fabmaster.ulp
+# WARNING: Read instructions in export-fabmaster.ulp !!
+eagle "-C edit .s1; board; run export-fabmaster.ulp; quit;" $board_name_short.brd
+mv $board_name_short.fab $target_directory/fabmaster
 	
 echo "- zipping ..."
 # zip board gerber and drill data	
