@@ -466,6 +466,8 @@ echo "- IDF ..."
 mkdir $target_directory/IDF
 # Export the IDF. NOTE: The ulp export-idf.ulp must exist on your machine.
 # Download it from https://github.com/Blunk-electronic/lbr_eagle/blob/master/ulp/export-idf.ulp
+# CS: Currently the exporter asks the operator for some parameters such as board thickness.
+#     In the future these parameters should be extracted from the board automatically.
 eagle "-C edit .s1; board; run export-idf.ulp; quit;" $board_name_short.brd
 mv $board_name_short.em? $target_directory/IDF/
 	
