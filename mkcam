@@ -469,15 +469,16 @@ bom_by_stock_manager=bom/$board_name_short"_bom.csv"
 	echo "WARNING !" $bom_by_stock_manager "does not exist !"
 	}
 
-
-echo "- IDF ..."
-mkdir $target_directory/IDF
+	
+# CS: This works well with Eagle version 7.7.0 but not with 9.5.x -> fix required
+# echo "- IDF ..."
+# mkdir $target_directory/IDF
 # Export the IDF. NOTE: The ulp export-idf.ulp must exist on your machine.
 # Download it from https://github.com/Blunk-electronic/lbr_eagle/blob/master/ulp/export-idf.ulp
 # CS: Currently the exporter asks the operator for some parameters such as board thickness.
 #     In the future these parameters should be extracted from the board automatically.
-eagle "-C edit .s1; board; run export-idf.ulp; quit;" $board_name_short.brd
-mv $board_name_short.em? $target_directory/IDF/
+# eagle "-C edit .s1; board; run export-idf.ulp; quit;" $board_name_short.brd
+# mv $board_name_short.em? $target_directory/IDF/
 	
 echo "- IPC-D-365 ..."
 mkdir $target_directory/IPC-D-356
