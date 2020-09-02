@@ -48,7 +48,7 @@
 
 set -e
 
-echo "CAM file generator version 021"
+echo "CAM file generator version 022"
 echo "written by Mario Blunk / Blunk electronic / mario.blunk@blunk-electronic.de"
 
 cad_cam_dir=CAD_CAM
@@ -525,14 +525,9 @@ target_pdf=$target_directory/pdf/$board_name_short"_schematic.pdf"
 echo "- brd & schematic ..."
 cp $board_name $target_directory/design_eagle/
 cp $schematic_name $target_directory/design_eagle/
-#eagle "-C PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.sch 
 
-# Use this command with V7.7:
-#eagle "-C PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.sch
-# Use this command with other version (V9.x ?)
-# in v7.5 for some reason we also have to mirror the schematic with option -m  So use the follwing line in v7.5 
-#eagle "-C PRINT -m -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;" $board_name_short.brd
-eagle $board_name_short.brd "-C PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;"
+# make pdf of schematic
+eagle $board_name_short.brd "-C edit .s1; PRINT -s 1.07 BLACK -1 -ROTATE LANDSCAPE PAPER a4 -CAPTION SHEETS all FILE $target_pdf; quit;"
 
 
 echo "- net & part list ..."
