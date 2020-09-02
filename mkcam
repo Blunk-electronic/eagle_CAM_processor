@@ -532,9 +532,7 @@ eagle $board_name_short.brd "-C edit .s1; PRINT -s 1.07 BLACK -1 -ROTATE LANDSCA
 
 echo "- net & part list ..."
 eagle "-C export netlist $target_directory/design_eagle/$board_name_short"_netlist".txt; quit;" $board_name_short.brd
-# For some reason, the partlist (for pick and place) must be exported from the schematic (seems to be a bug).
-#eagle "-C export partlist $target_directory/design_eagle/$board_name_short"_partlist".txt; quit;" $board_name_short.sch
-eagle "-C export partlist $target_directory/design_eagle/$board_name_short"_partlist".txt; quit;" $board_name_short.brd
+eagle "-C board; export partlist $target_directory/design_eagle/$board_name_short"_partlist".txt; quit;" $board_name_short.brd
 
 echo "- zipping .."
 target_directory=$(echo "CAD_CAM/"$board_name_short"_"$make_date)
