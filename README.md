@@ -53,12 +53,17 @@ has been detected.
 
 ## Installation
 
-The "installer" just copies the script "mkcam" to $HOME/bin. This way the user is
+By default the "installer" just copies the script "mkcam" to $HOME/bin. This way the user is
 free to modifiy "mkcam" as she whishes. The bin directory must be created
 manually if not existing already. Make sure the $PATH environment variable is set properly.
 
 ```sh
 sh install.sh
+```
+
+A target directory may be specified by the user like:
+```sh
+sh install.sh /home/ecad/bin
 ```
 
 In order to have "mkcam" available for all users, modifiy the installer so that it copies mkcam
