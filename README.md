@@ -66,8 +66,11 @@ A target directory may be specified by the user like:
 sh install.sh /home/ecad/bin
 ```
 
-In order to have "mkcam" available for all users, modifiy the installer so that it copies mkcam
-in /usr/local/bin for example. This would require root privileges of course.
+In order to have mkcam available for all users run the following command.
+This requires root privileges of course:
+```sh
+sh install.sh /usr/local/bin
+```
 
 ## Prerequisites
 Mkcam expects in the EAGLE project directory a subdirectory named "bom". 
